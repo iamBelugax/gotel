@@ -1,3 +1,11 @@
 {
-  "cSpell.words": ["Belugax", "coverprofile", "dylib", "gotel"]
+  "cSpell.words": [
+    "Belugax",
+    "coverprofile",
+    "dylib",
+    "golangci",
+    "gomega",
+    "gotel",
+    "onsi"
+  ]
 }

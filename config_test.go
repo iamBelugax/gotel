@@ -23,20 +23,22 @@ var _ = Describe("Config", func() {
 	)
 
 	Context("DefaultConfig", func() {
-		config := gotel.DefaultConfig(serviceName)
+		It("should return default config", func() {
+			config := gotel.DefaultConfig(serviceName)
 
-		Expect(config).NotTo(BeNil())
-		Expect(config.Service.Name).To(Equal(serviceName))
-		Expect(config.Service.Version).To(Equal(serviceVersion))
-		Expect(config.Service.Environment).To(Equal(environment))
+			Expect(config).NotTo(BeNil())
+			Expect(config.Service.Name).To(Equal(serviceName))
+			Expect(config.Service.Version).To(Equal(serviceVersion))
+			Expect(config.Service.Environment).To(Equal(environment))
 
-		Expect(config.OTLP.Endpoint).To(Equal(endpoint))
-		Expect(config.OTLP.BatchTimeout).To(Equal(batchTimeout))
-		Expect(config.OTLP.ExportTimeout).To(Equal(exportTimeout))
-		Expect(config.OTLP.Headers).To(BeEmpty())
+			Expect(config.OTLP.Endpoint).To(Equal(endpoint))
+			Expect(config.OTLP.BatchTimeout).To(Equal(batchTimeout))
+			Expect(config.OTLP.ExportTimeout).To(Equal(exportTimeout))
+			Expect(config.OTLP.Headers).To(BeEmpty())
 
-		Expect(config.Debug).To(BeFalse())
-		Expect(config.ResourceAttrs).To(BeEmpty())
-		Expect(config.Tracing.SamplingRatio).To(Equal(samplingRate))
+			Expect(config.Debug).To(BeFalse())
+			Expect(config.ResourceAttrs).To(BeEmpty())
+			Expect(config.Tracing.SamplingRatio).To(Equal(samplingRate))
+		})
 	})
 })
