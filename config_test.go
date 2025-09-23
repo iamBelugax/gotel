@@ -31,10 +31,10 @@ var _ = Describe("Config", func() {
 			Expect(config.Service.Version).To(Equal(serviceVersion))
 			Expect(config.Service.Environment).To(Equal(environment))
 
-			Expect(config.OTLP.Endpoint).To(Equal(endpoint))
-			Expect(config.OTLP.BatchTimeout).To(Equal(batchTimeout))
-			Expect(config.OTLP.ExportTimeout).To(Equal(exportTimeout))
-			Expect(config.OTLP.Headers).To(BeEmpty())
+			Expect(config.Exporter.Endpoint).To(Equal(endpoint))
+			Expect(config.Exporter.BatchTimeout).To(Equal(batchTimeout))
+			Expect(config.Exporter.ExportTimeout).To(Equal(exportTimeout))
+			Expect(config.Exporter.Headers).To(BeEmpty())
 
 			Expect(config.Debug).To(BeFalse())
 			Expect(config.ResourceAttrs).To(BeEmpty())
