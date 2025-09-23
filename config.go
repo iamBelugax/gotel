@@ -7,9 +7,9 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// Config holds the configuration settings for the OpenTelemetry provider.
+// config holds the configuration settings for the OpenTelemetry provider.
 // It defines how telemetry is exported, sampled, secured, and annotated.
-type Config struct {
+type config struct {
 	Service       *ServiceInfo    // Contains metadata about the service.
 	Exporter      *ExporterConfig // Configuration for the OTLP exporter.
 	Tracing       *TracingConfig  // Configuration for distributed tracing.
@@ -44,10 +44,13 @@ type SecurityConfig struct {
 	TLSCredentials credentials.TransportCredentials // Transport credentials for secure gRPC connections to collectors.
 }
 
+// An Option is a function that modifies a Config struct.
+type Option func(*config)
+
 // DefaultConfig returns a Config struct pre populated with sensible default
-// values for a development environment.
-func DefaultConfig(serviceName string) *Config {
-	return &Config{
+// values for a development environment, then applies the provided options.
+func DefaultConfig(serviceName string, opts ...Option) *config {
+	conf := &config{
 		Debug: false,
 		Service: &ServiceInfo{
 			Name:        serviceName,
@@ -64,88 +67,106 @@ func DefaultConfig(serviceName string) *Config {
 			Headers:       make(map[string]string),
 		},
 	}
+
+	for _, opt := range opts {
+		opt(conf)
+	}
+
+	return conf
 }
 
 // WithServiceInfo configures the core service identification attributes.
-func (c *Config) WithServiceInfo(name, version, environment string) *Config {
-	c.Service.Name = name
-	c.Service.Version = version
-	c.Service.Environment = environment
-	return c
+func WithServiceInfo(name, version, environment string) Option {
+	return func(c *config) {
+		c.Service.Name = name
+		c.Service.Version = version
+		c.Service.Environment = environment
+	}
 }
 
 // WithEndpoint sets the OTLP exporter's target gRPC endpoint.
-func (c *Config) WithEndpoint(endpoint string) *Config {
-	c.Exporter.Endpoint = endpoint
-	return c
+func WithEndpoint(endpoint string) Option {
+	return func(c *config) {
+		c.Exporter.Endpoint = endpoint
+	}
 }
 
 // WithHeader adds additional header to OTLP requests.
-func (c *Config) WithHeader(key string, val string) *Config {
-	c.Exporter.Headers[key] = val
-	return c
+func WithHeader(key string, val string) Option {
+	return func(c *config) {
+		c.Exporter.Headers[key] = val
+	}
 }
 
 // WithHeaders adds additional headers to OTLP requests.
-func (c *Config) WithHeaders(headers map[string]string) *Config {
-	maps.Copy(c.Exporter.Headers, headers)
-	return c
+func WithHeaders(headers map[string]string) Option {
+	return func(c *config) {
+		maps.Copy(c.Exporter.Headers, headers)
+	}
 }
 
 // WithExportTimeout sets the maximum allowed duration for an OTLP export operation.
-func (c *Config) WithExportTimeout(timeout time.Duration) *Config {
-	c.Exporter.ExportTimeout = timeout
-	return c
+func WithExportTimeout(timeout time.Duration) Option {
+	return func(c *config) {
+		c.Exporter.ExportTimeout = timeout
+	}
 }
 
 // WithBatchTimeout sets the maximum wait time before an OTLP batch is sent.
-func (c *Config) WithBatchTimeout(timeout time.Duration) *Config {
-	c.Exporter.BatchTimeout = timeout
-	return c
+func WithBatchTimeout(timeout time.Duration) Option {
+	return func(c *config) {
+		c.Exporter.BatchTimeout = timeout
+	}
 }
 
 // WithSamplingRatio sets the fraction of traces to sample.
 // Values are clamped between 0.0 (never sample) and 1.0 (always sample).
-func (c *Config) WithSamplingRatio(ratio float64) *Config {
-	if ratio < 0.0 {
-		ratio = 0.0
+func WithSamplingRatio(ratio float64) Option {
+	return func(c *config) {
+		if ratio < 0.0 {
+			ratio = 0.0
+		}
+		if ratio > 1.0 {
+			ratio = 1.0
+		}
+		c.Tracing.SamplingRatio = ratio
 	}
-	if ratio > 1.0 {
-		ratio = 1.0
-	}
-	c.Tracing.SamplingRatio = ratio
-	return c
 }
 
 // WithResourceAttr adds or updates a single resource attribute (key-value pair).
-func (c *Config) WithResourceAttr(key string, value any) *Config {
-	c.ResourceAttrs[key] = value
-	return c
+func WithResourceAttr(key string, value any) Option {
+	return func(c *config) {
+		c.ResourceAttrs[key] = value
+	}
 }
 
 // WithResourceAttrs bulk-adds or updates multiple resource attributes.
-func (c *Config) WithResourceAttrs(attrs map[string]any) *Config {
-	maps.Copy(c.ResourceAttrs, attrs)
-	return c
+func WithResourceAttrs(attrs map[string]any) Option {
+	return func(c *config) {
+		maps.Copy(c.ResourceAttrs, attrs)
+	}
 }
 
 // WithDebug enables or disables debug mode.
 // When enabled, telemetry is also printed to stdout using OTLP stdout exporters.
-func (c *Config) WithDebug(debug bool) *Config {
-	c.Debug = debug
-	return c
+func WithDebug(debug bool) Option {
+	return func(c *config) {
+		c.Debug = debug
+	}
 }
 
 // WithInsecure enables or disables insecure mode (skips TLS verification).
-func (c *Config) WithInsecure(insecure bool) *Config {
-	c.Security.Insecure = insecure
-	c.Security.TLSCredentials = nil
-	return c
+func WithInsecure(insecure bool) Option {
+	return func(c *config) {
+		c.Security.Insecure = insecure
+		c.Security.TLSCredentials = nil
+	}
 }
 
 // WithTLSCredentials sets explicit gRPC transport credentials for secure telemetry transmission.
-func (c *Config) WithTLSCredentials(creds credentials.TransportCredentials) *Config {
-	c.Security.Insecure = false
-	c.Security.TLSCredentials = creds
-	return c
+func WithTLSCredentials(creds credentials.TransportCredentials) Option {
+	return func(c *config) {
+		c.Security.Insecure = false
+		c.Security.TLSCredentials = creds
+	}
 }
