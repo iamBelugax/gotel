@@ -11,7 +11,7 @@ import (
 // Span is a wrapper around the OpenTelemetry span that provides convenient methods
 // for setting attributes, errors, statuses and events.
 type Span struct {
-	trace.Span
+	sp     trace.Span
 	tracer trace.Tracer
 }
 
@@ -20,20 +20,32 @@ func NewSpan(
 	ctx context.Context, tracer trace.Tracer, name string, options ...trace.SpanStartOption,
 ) (context.Context, *Span) {
 	ctx, span := tracer.Start(ctx, name, options...)
-	return ctx, &Span{tracer: tracer, Span: span}
+	return ctx, &Span{tracer: tracer, sp: span}
 }
 
 // WithAttributes adds one or more attributes to the span.
 func (s *Span) WithAttributes(attrs ...attribute.KeyValue) *Span {
-	s.Span.SetAttributes(attrs...)
+	s.sp.SetAttributes(attrs...)
+	return s
+}
+
+// WithStatus sets the status of the span explicitly.
+func (s *Span) WithStatus(code codes.Code, description string) *Span {
+	s.sp.SetStatus(code, description)
+	return s
+}
+
+// AddEvent adds an event to the span with optional attributes.
+func (s *Span) AddEvent(name string, attrs ...attribute.KeyValue) *Span {
+	s.sp.AddEvent(name, trace.WithAttributes(attrs...))
 	return s
 }
 
 // WithError records the given error on the span and sets the span status to error.
 func (s *Span) WithError(err error) *Span {
 	if err != nil {
-		s.Span.RecordError(err)
-		s.Span.SetStatus(codes.Error, err.Error())
+		s.sp.RecordError(err)
+		s.sp.SetStatus(codes.Error, err.Error())
 	}
 	return s
 }
@@ -45,17 +57,62 @@ func (s *Span) EndWithError(err error) {
 	} else {
 		s.WithStatus(codes.Ok, "success")
 	}
-	s.End()
+	s.sp.End()
 }
 
-// WithStatus sets the status of the span explicitly.
-func (s *Span) WithStatus(code codes.Code, description string) *Span {
-	s.Span.SetStatus(code, description)
-	return s
+// End completes the Span. The Span is considered complete and ready to be
+// delivered through the rest of the telemetry pipeline after this method is called.
+func (s *Span) End() {
+	s.sp.End()
 }
 
-// AddEvent adds an event to the span with optional attributes.
-func (s *Span) AddEvent(name string, attrs ...attribute.KeyValue) *Span {
-	s.Span.AddEvent(name, trace.WithAttributes(attrs...))
-	return s
+// Context returns the SpanContext of the underlying span.
+func (s *Span) Context() trace.SpanContext {
+	return s.sp.SpanContext()
+}
+
+// IsRecording reports whether the span is actively recording events.
+func (s *Span) IsRecording() bool {
+	return s.sp.IsRecording()
+}
+
+// ChildSpan starts a new child span from the current one.
+func (s *Span) ChildSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, *Span) {
+	ctx, span := s.tracer.Start(ctx, name, opts...)
+	return ctx, &Span{tracer: s.tracer, sp: span}
+}
+
+// Tracer is a wrapper around the OpenTelemetry tracer that provides
+// convenient methods for starting and managing spans.
+type Tracer struct {
+	tracer trace.Tracer
+}
+
+// NewTracer creates a new Tracer with an associated service name.
+func NewTracer(tracer trace.Tracer) *Tracer {
+	return &Tracer{tracer: tracer}
+}
+
+// StartSpan starts a new span with the given name and options.
+// Returns a context containing the span and a wrapped Span instance.
+func (t *Tracer) StartSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, *Span) {
+	return NewSpan(ctx, t.tracer, name, opts...)
+}
+
+// WithSpan executes the given function within a new span.
+// It automatically ends the span, sets error status if the function returns an error
+// and sets success status otherwise.
+func (t *Tracer) WithSpan(
+	ctx context.Context, name string, fn func(context.Context, *Span) error, opts ...trace.SpanStartOption,
+) error {
+	ctx, span := t.StartSpan(ctx, name, opts...)
+	defer span.sp.End()
+
+	if err := fn(ctx, span); err != nil {
+		span.WithError(err)
+		return err
+	}
+
+	span.WithStatus(codes.Ok, "success")
+	return nil
 }
