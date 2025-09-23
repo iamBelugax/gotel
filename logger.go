@@ -1,6 +1,7 @@
 package gotel
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -12,7 +13,7 @@ import (
 // ZapLogger is a thin wrapper around *zap.Logger that integrates with OpenTelemetry
 // using the otelzap bridge.
 type ZapLogger struct {
-	*zap.Logger
+	logger *zap.Logger
 }
 
 // NewZapLogger builds a zap logger configured for the given service name.
@@ -62,9 +63,39 @@ func NewZapLogger(serviceName, version, level string, debug bool) (*ZapLogger, e
 	)
 
 	return &ZapLogger{
-		Logger: logger.With(
+		logger: logger.With(
 			zap.String("version", version),
 			zap.String("service", serviceName),
 		),
 	}, nil
+}
+
+// WithContext returns a child *zap.Logger that has the provided context attached as a field.
+func (l *ZapLogger) WithContext(ctx context.Context) *zap.Logger {
+	return l.logger.With(zap.Any("context", ctx))
+}
+
+// Info logs an info level message and attaches trace/span info (if present in ctx).
+func (l *ZapLogger) Info(ctx context.Context, msg string, fields ...zap.Field) {
+	l.WithContext(ctx).Info(msg, fields...)
+}
+
+// Error logs an error level message and attaches trace/span info (if present in ctx).
+func (l *ZapLogger) Error(ctx context.Context, msg string, fields ...zap.Field) {
+	l.WithContext(ctx).Error(msg, fields...)
+}
+
+// Warn logs a warning level message and attaches trace/span info (if present in ctx).
+func (l *ZapLogger) Warn(ctx context.Context, msg string, fields ...zap.Field) {
+	l.WithContext(ctx).Warn(msg, fields...)
+}
+
+// Debug logs a debug level message and attaches trace/span info (if present in ctx).
+func (l *ZapLogger) Debug(ctx context.Context, msg string, fields ...zap.Field) {
+	l.WithContext(ctx).Debug(msg, fields...)
+}
+
+// Sync flushes any buffered log entries.
+func (l *ZapLogger) Sync() error {
+	return l.logger.Sync()
 }
