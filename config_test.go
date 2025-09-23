@@ -22,9 +22,36 @@ var _ = Describe("Config", func() {
 		exportTimeout = time.Second * 30
 	)
 
-	Context("DefaultConfig", func() {
+	Context("DefaultConfig with no options", func() {
 		It("should return default config", func() {
 			config := gotel.DefaultConfig(serviceName)
+
+			Expect(config).NotTo(BeNil())
+			Expect(config.Service.Name).To(Equal(serviceName))
+			Expect(config.Service.Version).To(Equal(serviceVersion))
+			Expect(config.Service.Environment).To(Equal(environment))
+
+			Expect(config.Exporter.Endpoint).To(Equal(endpoint))
+			Expect(config.Exporter.BatchTimeout).To(Equal(batchTimeout))
+			Expect(config.Exporter.ExportTimeout).To(Equal(exportTimeout))
+			Expect(config.Exporter.Headers).To(BeEmpty())
+
+			Expect(config.Debug).To(BeFalse())
+			Expect(config.ResourceAttrs).To(BeEmpty())
+			Expect(config.Tracing.SamplingRatio).To(Equal(samplingRate))
+		})
+	})
+
+	Context("DefaultConfig with updated service info", func() {
+		It("should return updated config", func() {
+			serviceVersion := "2.0.0"
+			environment = "production"
+			serviceName := "updated-service-name"
+
+			config := gotel.DefaultConfig(
+				serviceName,
+				gotel.WithServiceInfo(serviceName, serviceVersion, environment),
+			)
 
 			Expect(config).NotTo(BeNil())
 			Expect(config.Service.Name).To(Equal(serviceName))

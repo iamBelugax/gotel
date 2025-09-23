@@ -7,6 +7,10 @@
     "gomega",
     "gotel",
     "onsi",
-    "otelzap"
+    "otelzap",
+    "otlptrace",
+    "otlptracegrpc",
+    "semconv",
+    "stdouttrace"
   ]
 }
