@@ -6,6 +6,7 @@
     "golangci",
     "gomega",
     "gotel",
-    "onsi"
+    "onsi",
+    "otelzap"
   ]
 }
