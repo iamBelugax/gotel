@@ -8,9 +8,17 @@
     "gotel",
     "onsi",
     "otelzap",
+    "otlplog",
+    "otlploggrpc",
+    "otlpmetric",
+    "otlpmetricgrpc",
     "otlptrace",
     "otlptracegrpc",
+    "sdklog",
+    "sdkmetric",
     "semconv",
+    "stdoutlog",
+    "stdoutmetric",
     "stdouttrace"
   ]
 }
