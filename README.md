@@ -91,17 +91,6 @@ While not strictly required, the Collector becomes essential in production
 environments where you need advanced data processing capabilities or want to
 avoid tight coupling between applications and monitoring backends.
 
-## Installation
-
-Install Gotel using Go modules:
-
-```bash
-go get github.com/iamBelugax/gotel
-```
-
-The library requires Go 1.19 or later and includes all necessary OpenTelemetry
-dependencies.
-
 ## Configuration
 
 Gotel provides extensive configuration options through functional options. The
