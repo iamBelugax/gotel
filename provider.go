@@ -273,7 +273,7 @@ func (p *Provider) initLogging(ctx context.Context, res *resource.Resource) erro
 	)
 	global.SetLoggerProvider(p.logProvider)
 
-	zapLogger, err := NewZapLogger(
+	zapLogger, err := newZapLogger(
 		p.config.Service.Name,
 		p.config.Service.Version,
 		p.config.Logging.Level,

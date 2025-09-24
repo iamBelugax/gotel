@@ -17,7 +17,7 @@ type ZapLogger struct {
 }
 
 // NewZapLogger builds a zap logger configured for the given service name.
-func NewZapLogger(serviceName, version, level string, debug bool) (*ZapLogger, error) {
+func newZapLogger(serviceName, version, level string, debug bool) (*ZapLogger, error) {
 	// Parse the log level from the config string.
 	logLevel, err := zapcore.ParseLevel(level)
 	if err != nil {
