@@ -10,12 +10,32 @@ import (
 // config holds the configuration settings for the OpenTelemetry provider.
 // It defines how telemetry is exported, sampled, secured, and annotated.
 type config struct {
-	Service       *ServiceInfo    // Contains metadata about the service.
-	Exporter      *ExporterConfig // Configuration for the OTLP exporter.
-	Tracing       *TracingConfig  // Configuration for distributed tracing.
-	Security      *SecurityConfig // Security related settings.
-	ResourceAttrs map[string]any  // Additional key-value pairs describing the resource emitting telemetry.
-	Debug         bool            // Enables stdout exporters for all signals, printing telemetry to the console.
+	// Service contains identifying information about the running service,
+	// such as its name, version and environment.
+	Service *ServiceInfo
+
+	// Exporter specifies configuration for the OTLP exporter, including
+	// endpoint, headers, timeouts and batch settings.
+	Exporter *ExporterConfig
+
+	// Tracing configures distributed tracing, including sampling ratio and
+	// trace propagation behavior.
+	Tracing *TracingConfig
+
+	// Logging configures application logging, including log level and
+	// integration with OpenTelemetry logging.
+	Logging *LoggingConfig
+
+	// Security holds TLS or insecure transport credentials used to connect
+	// to an OTLP collector.
+	Security *SecurityConfig
+
+	// ResourceAttrs contains additional custom key-value attributes describing
+	// the resource emitting telemetry.
+	ResourceAttrs map[string]any
+
+	// Debug, when true, enables stdout exporters for tracing, metrics, and logs.
+	Debug bool
 }
 
 // ExporterConfig defines settings for the OpenTelemetry Protocol (OTLP) exporter.
@@ -26,9 +46,14 @@ type ExporterConfig struct {
 	BatchTimeout  time.Duration     // Maximum wait time before the exporter sends a batch.
 }
 
-// TracingConfig defines sampling and tracing-related settings.
+// TracingConfig defines sampling and tracing related settings.
 type TracingConfig struct {
 	SamplingRatio float64 // Fraction of traces to record (1.0 = always, 0.0 = never).
+}
+
+// LoggingConfig defines logging related settings.
+type LoggingConfig struct {
+	Level string // Level controls the minimum log level to output.
 }
 
 // ServiceInfo holds identifying information about the instrumented service.
@@ -49,17 +74,18 @@ type Option func(*config)
 
 // DefaultConfig returns a Config struct pre populated with sensible default
 // values for a development environment, then applies the provided options.
-func DefaultConfig(serviceName string, opts ...Option) *config {
+func DefaultConfig(opts ...Option) *config {
 	conf := &config{
 		Debug: false,
 		Service: &ServiceInfo{
-			Name:        serviceName,
+			Name:        "unknown",
 			Version:     "1.0.0",
 			Environment: "development",
 		},
 		ResourceAttrs: make(map[string]any),
 		Security:      &SecurityConfig{Insecure: true},
 		Tracing:       &TracingConfig{SamplingRatio: 1.0},
+		Logging:       &LoggingConfig{Level: "debug"},
 		Exporter: &ExporterConfig{
 			Endpoint:      "localhost:4317",
 			BatchTimeout:  5 * time.Second,
@@ -168,5 +194,12 @@ func WithTLSCredentials(creds credentials.TransportCredentials) Option {
 	return func(c *config) {
 		c.Security.Insecure = false
 		c.Security.TLSCredentials = creds
+	}
+}
+
+// WithLogLevel sets the minimum logging level.
+func WithLogLevel(level string) Option {
+	return func(c *config) {
+		c.Logging.Level = level
 	}
 }
