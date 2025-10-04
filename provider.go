@@ -78,7 +78,7 @@ func (p *Provider) Meter() metric.Meter {
 	return p.meter
 }
 
-// Logger returns the configured Zap logger with OpenTelemetry integration.
+// Logger returns the configured Zap logger.
 func (p *Provider) Logger() *ZapLogger {
 	return p.logger
 }
@@ -107,7 +107,6 @@ func (p *Provider) Shutdown(ctx context.Context) error {
 
 // createResource builds an OTEL resource from service metadata and custom attributes.
 func (p *Provider) createResource(ctx context.Context) (*resource.Resource, error) {
-	// Standard semantic attributes (service name, version, environment).
 	attributes := []resource.Option{
 		resource.WithAttributes(
 			semconv.ServiceName(p.config.Service.Name),
@@ -116,7 +115,6 @@ func (p *Provider) createResource(ctx context.Context) (*resource.Resource, erro
 		),
 	}
 
-	// Append custom resource attributes, if provided.
 	if len(p.config.ResourceAttrs) > 0 {
 		customAttrs := make([]attribute.KeyValue, 0, len(p.config.ResourceAttrs))
 		for key, value := range p.config.ResourceAttrs {
@@ -129,7 +127,7 @@ func (p *Provider) createResource(ctx context.Context) (*resource.Resource, erro
 }
 
 // initTracing configures the tracer provider, exporter, sampler and processor.
-func (p *Provider) initTracing(ctx context.Context, res *resource.Resource) error {
+func (p *Provider) initTracing(ctx context.Context, resource *resource.Resource) error {
 	var (
 		err      error
 		exporter sdktrace.SpanExporter
@@ -170,7 +168,7 @@ func (p *Provider) initTracing(ctx context.Context, res *resource.Resource) erro
 		sdktrace.WithBatchTimeout(p.config.Exporter.BatchTimeout),
 	)
 	p.traceProvider = sdktrace.NewTracerProvider(
-		sdktrace.WithResource(res),
+		sdktrace.WithResource(resource),
 		sdktrace.WithSampler(sampler),
 		sdktrace.WithSpanProcessor(processor),
 	)

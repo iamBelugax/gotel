@@ -17,9 +17,9 @@ import (
 
 // HTTPMiddleware provides OpenTelemetry instrumentation for HTTP handlers.
 type HTTPMiddleware struct {
-	serviceName string         // Name of the service emitting telemetry.
-	tracer      *Tracer        // Wrapper around OpenTelemetry tracer.
-	metrics     *CommonMetrics // Common metrics collector.
+	serviceName string
+	tracer      *Tracer
+	metrics     *CommonMetrics
 }
 
 // NewHTTPMiddleware creates and returns a new HTTPMiddleware instance.
@@ -31,7 +31,6 @@ func NewHTTPMiddleware(serviceName string, tracer *Tracer, metrics *CommonMetric
 	}
 }
 
-// Handler wraps an http.Handler with OpenTelemetry instrumentation.
 func (m *HTTPMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		spanName := fmt.Sprintf("%s %s", r.Method, r.URL.Path)

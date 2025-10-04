@@ -8,10 +8,8 @@ import (
 )
 
 // config holds the configuration settings for the OpenTelemetry provider.
-// It defines how telemetry is exported, sampled, secured, and annotated.
 type config struct {
 	// Service contains identifying information about the running service,
-	// such as its name, version and environment.
 	Service *ServiceInfo
 
 	// Exporter specifies configuration for the OTLP exporter, including
@@ -38,42 +36,36 @@ type config struct {
 	Debug bool
 }
 
-// ExporterConfig defines settings for the OpenTelemetry Protocol (OTLP) exporter.
 type ExporterConfig struct {
-	Endpoint      string            // Target gRPC OTLP collector endpoint.
-	Headers       map[string]string // Additional request headers sent with OTLP requests.
-	ExportTimeout time.Duration     // Maximum allowed duration for an export operation.
-	BatchTimeout  time.Duration     // Maximum wait time before the exporter sends a batch.
+	Endpoint      string
+	Headers       map[string]string
+	ExportTimeout time.Duration
+	BatchTimeout  time.Duration
 }
 
-// TracingConfig defines sampling and tracing related settings.
 type TracingConfig struct {
-	SamplingRatio float64 // Fraction of traces to record (1.0 = always, 0.0 = never).
+	SamplingRatio float64 // (1.0 = always, 0.0 = never).
 }
 
-// LoggingConfig defines logging related settings.
 type LoggingConfig struct {
-	Level string // Level controls the minimum log level to output.
+	Level string
 }
 
-// ServiceInfo holds identifying information about the instrumented service.
 type ServiceInfo struct {
-	Name        string // Unique identifier for the service.
-	Version     string // Semantic version of the service.
-	Environment string // Deployment environment (e.g. "development", "staging", "production").
+	Name        string
+	Version     string
+	Environment string
 }
 
-// SecurityConfig configures authentication and encryption for telemetry transmission.
 type SecurityConfig struct {
-	Insecure       bool                             // If true, skips TLS verification.
-	TLSCredentials credentials.TransportCredentials // Transport credentials for secure gRPC connections to collectors.
+	Insecure       bool
+	TLSCredentials credentials.TransportCredentials
 }
 
-// An Option is a function that modifies a Config struct.
 type Option func(*config)
 
 // DefaultConfig returns a Config struct pre populated with sensible default
-// values for a development environment, then applies the provided options.
+// values for a development environment.
 func DefaultConfig(opts ...Option) *config {
 	conf := &config{
 		Debug: false,
